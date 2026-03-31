@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>User Awareness & Training Module</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    width: 70%;
+    margin: auto;
+    padding: 30px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.subtitle {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #cbd5e1;
+}
+
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.4);
+}
+
+button {
+    padding: 10px 20px;
+    margin-top: 15px;
+    background: #3b82f6;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #2563eb;
+}
+
+.progress-box {
+    margin-bottom: 20px;
+}
+
+.progress-bar {
+    width: 100%;
+    background: #334155;
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#progressFill {
+    width: 0%;
+    height: 100%;
+    background: #22c55e;
+    transition: width 0.4s ease;
+}
+
+.hidden {
+    display: none;
+}
+
+.option {
+    margin: 8px 0;
+}
+
+.badge {
+    font-size: 20px;
+    margin-top: 15px;
+    padding: 10px;
+    background: #16a34a;
+    border-radius: 8px;
+    text-align: center;
+}
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+    <h1>Security Awareness Training</h1>
+    <p class="subtitle">Learn how to identify phishing attacks and protect yourself.</p>
+
+    <div class="progress-box">
+        <p>Progress: <span id="progressText">0%</span></p>
+        <div class="progress-bar">
+            <div id="progressFill"></div>
+        </div>
+    </div>
+
+    <div id="lessonSection" class="card">
+        <h2 id="lessonTitle"></h2>
+        <p id="lessonContent"></p>
+        <button onclick="nextLesson()">Next</button>
+    </div>
+
+    <div id="quizSection" class="card hidden">
+        <h2>Quick Quiz</h2>
+        <p id="questionText"></p>
+        <div id="options"></div>
+        <button onclick="submitAnswer()">Submit Answer</button>
+    </div>
+
+    <div id="resultSection" class="card hidden">
+        <h2>Training Completed</h2>
+        <p id="scoreText"></p>
+        <div class="badge">🏆 Certified Aware User</div>
+        <button onclick="restartTraining()">Restart Training</button>
+    </div>
+
+</div>
+
+<script>
+const lessons = [
+    {
+        title: "What is Phishing?",
+        content: "Phishing is a cyber attack where attackers impersonate trusted entities to steal sensitive information."
+    },
+    {
+        title: "Common Signs of Phishing",
+        content: "Look for suspicious sender addresses, urgent language, spelling errors, and unexpected attachments."
+    },
+    {
+        title: "How to Stay Safe",
+        content: "Never click unknown links, verify sender identity, enable 2FA, and report suspicious emails."
+    }
+];
+
+const quiz = [
+    {
+        question: "Which is a common phishing indicator?",
+        options: [
+            "Official email domain",
+            "Urgent request for password",
+            "Verified company contact",
+            "Secure HTTPS site"
+        ],
+        answer: 1
+    }
+];
+
+let currentLesson = 0;
+let score = 0;
+let selectedOption = null;
+
+const lessonTitle = document.getElementById("lessonTitle");
+const lessonContent = document.getElementById("lessonContent");
+const lessonSection = document.getElementById("lessonSection");
+const quizSection = document.getElementById("quizSection");
+const resultSection = document.getElementById("resultSection");
+
+function loadLesson() {
+    lessonTitle.innerText = lessons[currentLesson].title;
+    lessonContent.innerText = lessons[currentLesson].content;
+    updateProgress();
+}
+
+function nextLesson() {
+    currentLesson++;
+    if (currentLesson < lessons.length) {
+        loadLesson();
+    } else {
+        showQuiz();
+    }
+}
+
+function showQuiz() {
+    lessonSection.classList.add("hidden");
+    quizSection.classList.remove("hidden");
+
+    const questionText = document.getElementById("questionText");
+    const optionsDiv = document.getElementById("options");
+
+    questionText.innerText = quiz[0].question;
+    optionsDiv.innerHTML = "";
+
+    quiz[0].options.forEach((option, index) => {
+        const div = document.createElement("div");
+        div.classList.add("option");
+        div.innerHTML = `
+            <input type="radio" name="quizOption" value="${index}" 
+                onclick="selectedOption=${index}">
+            ${option}
+        `;
+        optionsDiv.appendChild(div);
+    });
+
+    updateProgress();
+}
+
+function submitAnswer() {
+    if (selectedOption === quiz[0].answer) {
+        score++;
+    }
+
+    quizSection.classList.add("hidden");
+    resultSection.classList.remove("hidden");
+
+    document.getElementById("scoreText").innerText =
+        `Your Score: ${score} / ${quiz.length}`;
+
+    updateProgress(true);
+}
+
+function updateProgress(completed = false) {
+    const progressFill = document.getElementById("progressFill");
+    const progressText = document.getElementById("progressText");
+
+    let progressPercent;
+
+    if (completed) {
+        progressPercent = 100;
+    } else {
+        progressPercent = Math.floor((currentLesson / lessons.length) * 100);
+    }
+
+    progressFill.style.width = progressPercent + "%";
+    progressText.innerText = progressPercent + "%";
+}
+
+function restartTraining() {
+    currentLesson = 0;
+    score = 0;
+    selectedOption = null;
+
+    resultSection.classList.add("hidden");
+    lessonSection.classList.remove("hidden");
+
+    loadLesson();
+}
+
+loadLesson();
+</script>
+
+</body>
+</html>

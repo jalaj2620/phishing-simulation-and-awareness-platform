@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaigns • Phishing Platform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    
+<aside class="sidebar">
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+    <div>
+      <div class="brand">PhishSim</div>
+      <div class="tiny muted">Admin Console</div>
+    </div>
+  </div>
+  <nav class="nav stack">
+    <a href="dashboard.html">🏠 Dashboard</a>
+    <a href="campaigns.html" class="active">✉️ Campaigns</a>
+    <a href="training.html">🎓 Training</a>
+    <a href="/user-awareness">💻 User Awareness</a>
+  </nav>
+  <div style="margin-top:18px" class="tiny muted">Environment: <span class="badge">Demo</span></div>
+</aside>
+
+    <div>
+      <header class="topbar">
+        <div class="row">
+          <button id="newCampaignBtn" class="btn primary">+ New Campaign</button>
+          <button class="btn ghost" id="templatesBtn">Templates</button>
+        </div>
+        <div class="row">
+          <span class="pill">CTR target &lt; 10%</span>
+          <div class="avatar"></div>
+        </div>
+      </header>
+
+      <main>
+        <div class="card">
+          <h3>All Campaigns</h3>
+          <div style="overflow:auto">
+            <table id="campaignsTable">
+              <thead>
+                <tr><th>Name</th><th>Start</th><th>Targets</th><th>Status</th><th>Click-through</th><th>Reported</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="campaignsBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:18px">
+          <div class="card">
+            <h3>Template Gallery</h3>
+            <div class="grid cols-2">
+              <div class="card"><div class="title">📎 Invoice Payment</div><div class="tiny muted">Attachment lure, urgency</div><button class="btn" style="margin-top:10px">Use</button></div>
+              <div class="card"><div class="title">🔐 Password Reset</div><div class="tiny muted">Credential phish</div><button class="btn" style="margin-top:10px">Use</button></div>
+              <div class="card"><div class="title">🎁 Gift Voucher</div><div class="tiny muted">Incentive lure</div><button class="btn" style="margin-top:10px">Use</button></div>
+              <div class="card"><div class="title">📄 DocuSign</div><div class="tiny muted">Link + sign</div><button class="btn" style="margin-top:10px">Use</button></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Performance Snapshot</h3>
+            <div class="stack">
+              <div class="row" style="justify-content:space-between"><span class="muted">Avg CTR</span><strong id="avgCtr">—</strong></div>
+              <div class="progress"><span id="avgCtrBar" style="width:0%"></span></div>
+              <div class="row" style="justify-content:space-between"><span class="muted">Avg Report Rate</span><strong id="avgReport">—</strong></div>
+              <div class="progress"><span id="avgReportBar" style="width:0%"></span></div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="importModal" style="position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,0.45)">
+    <div style="width:90%;max-width:680px;background:var(--surface-2);padding:18px;border-radius:12px;border:1px solid var(--border)">
+      <h3>Import Targets</h3>
+      <div class="tiny muted">Paste emails (one per line) or upload a CSV (first column).</div>
+      <textarea id="importArea" rows="8" style="width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid var(--border);background:#0d1531;color:var(--text)"></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+        <input id="csvFile" type="file" accept=".csv"/>
+        <div style="flex:1"></div>
+        <button id="importCancel" class="btn ghost">Cancel</button>
+        <button id="importSubmit" class="btn primary">Import</button>
+      </div>
+      <div id="importMsg" class="tiny muted" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <!-- Templates Modal -->
+  <div id="templatesModal" style="position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,0.45);z-index:999">
+    <div style="width:90%;max-width:700px;background:var(--surface-2);padding:20px;border-radius:12px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3>Available Campaign Templates</h3>
+        <button id="closeTemplates" class="btn ghost">✖</button>
+      </div>
+      <div class="grid cols-2" id="templateList"></div>
+    </div>
+  </div>
+
+  <!-- Preview Popup -->
+  <div id="previewPopup" style="position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,0.6);z-index:1000">
+    <div style="background:var(--surface-2);padding:20px;border-radius:12px;border:1px solid var(--border);max-width:600px;width:90%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 id="previewTitle"></h3>
+        <button id="closePreview" class="btn ghost">✖</button>
+      </div>
+      <pre id="previewContent" style="background:#0d1531;color:var(--text);padding:10px;border-radius:8px;white-space:pre-wrap;font-size:.9rem"></pre>
+    </div>
+  </div>
+
+  <div id="toast" style="position:fixed;bottom:18px;right:18px;padding:10px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:12px;display:none;box-shadow:var(--shadow);color:var(--text);font-size:.9rem;"></div>
+
+  <script>
+    
+    const templates = [
+      {name:'📎 Invoice Payment', desc:'Attachment lure with urgency tone', preview:`Subject: Invoice #4287 Overdue\n\nDear Customer,\n\nYour payment for invoice #4287 is overdue. Please review the attached document and process the payment immediately to avoid service interruption.\n\nThank you,\nBilling Department`},
+      {name:'🔐 Password Reset', desc:'Fake login form requesting credentials', preview:`Subject: Reset Your Account Password\n\nWe detected unusual activity on your account. To secure your access, please reset your password now by visiting the link below.\n\n[Reset My Password]`},
+      {name:'🎁 Gift Voucher', desc:'Incentive lure to claim a reward', preview:`Subject: You’ve Won a $100 Gift Voucher!\n\nCongratulations! You’ve been selected to receive a $100 shopping voucher. Click below to claim your reward.\n\n[Claim My Gift]`},
+      {name:'📄 DocuSign', desc:'Link lure to a fake signing page', preview:`Subject: Document Requires Your Signature\n\nA confidential document is waiting for your review. Please sign securely using the link below.\n\n[View Document]`},
+      {name:'⚠️ IT Support Notice', desc:'Impersonation of internal helpdesk', preview:`Subject: IT Security Alert\n\nYour mailbox has reached storage limit. Visit the IT portal below to increase your quota.\n\n[Increase Storage]`},
+      {name:'💰 Payroll Update', desc:'Finance-themed data capture', preview:`Subject: Payroll Update Confirmation\n\nWe’ve made updates to our payment system. Confirm your payroll details to ensure timely deposit.\n\n[Confirm Now]`}
+    ];
+    
+    const toast = document.getElementById('toast');
+    function showToast(msg){
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(()=> toast.style.display='none', 2000);
+    }
+
+    function openTemplatesModal(){
+      const modal = document.getElementById('templatesModal');
+      const list = document.getElementById('templateList');
+      list.innerHTML = '';
+      for(const t of templates){
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="title">${t.name}</div>
+          <div class="tiny muted">${t.desc}</div>
+          <div class="row" style="margin-top:10px;gap:6px">
+            <button class="btn ghost" data-preview="${t.name}">Preview</button>
+            <button class="btn" data-template="${t.name}">Use</button>
+          </div>
+        `;
+        list.appendChild(card);
+      }
+      modal.style.display = 'grid';
+    }
+
+    function closeTemplatesModal(){ document.getElementById('templatesModal').style.display = 'none'; }
+
+    document.getElementById('templatesBtn').addEventListener('click', openTemplatesModal);
+    document.getElementById('closeTemplates').addEventListener('click', closeTemplatesModal);
+
+    const previewPopup = document.getElementById('previewPopup');
+    const previewTitle = document.getElementById('previewTitle');
+    const previewContent = document.getElementById('previewContent');
+    document.getElementById('closePreview').addEventListener('click', ()=> previewPopup.style.display='none');
+
+    document.addEventListener('click',(ev)=>{
+      const btn = ev.target.closest('button[data-preview]');
+      if(!btn) return;
+      const name = btn.getAttribute('data-preview');
+      const tpl = templates.find(t=>t.name===name);
+      if(tpl){
+        previewTitle.textContent = tpl.name;
+        previewContent.textContent = tpl.preview;
+        previewPopup.style.display = 'grid';
+      }
+    });
+
+    let campaigns = [];
+
+    async function api(path, opts = {}) {
+      const res = await fetch(path, opts);
+      let body;
+      try { body = await res.json(); } catch(e) { body = null; }
+      return { ok: res.ok, status: res.status, body };
+    }
+
+    async function loadCampaigns(){
+      const r = await api('/api/campaigns');
+      if(!r.ok) return;
+      campaigns = r.body || [];
+      renderCampaigns();
+      computeSnapshot();
+    }
+
+    function renderCampaigns(){
+      const tbody = document.getElementById('campaignsBody');
+      tbody.innerHTML = '';
+      for(const c of campaigns){
+        const tr = document.createElement('tr');
+        const start = c.created_at ? c.created_at.split('T')[0] : '—';
+        const targets = c.targets_count || 0;
+        const clicks = c.clicks_count || 0;
+        const ctr = targets ? ((clicks/targets)*100).toFixed(1)+'%' : '—';
+        tr.innerHTML = `
+          <td>${escapeHtml(c.name)}</td>
+          <td>${start}</td>
+          <td>${targets}</td>
+          <td><span class="status ${c.status==='active'?'warn':'ok'}">${escapeHtml(c.status||'draft')}</span></td>
+          <td>${ctr}</td>
+          <td>—</td>
+          <td>
+            <button class="btn" data-action="import" data-id="${c.id}">Import</button>
+            <button class="btn ghost" data-action="export" data-id="${c.id}">Export</button>
+            <button class="btn" data-action="stats" data-id="${c.id}">Stats</button>
+            <button class="btn ghost" data-action="delete" data-id="${c.id}">🗑️</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+    function computeSnapshot(){
+      if(!campaigns.length) return;
+      let totalTargets=0,totalClicks=0;
+      for(const c of campaigns){totalTargets+=(c.targets_count||0);totalClicks+=(c.clicks_count||0);}
+      const avgCtr = totalTargets ? Math.round((totalClicks/totalTargets)*100):0;
+      document.getElementById('avgCtr').textContent = avgCtr+'%';
+      document.getElementById('avgCtrBar').style.width = avgCtr+'%';
+      const avgReport = 56;
+      document.getElementById('avgReport').textContent = avgReport+'%';
+      document.getElementById('avgReportBar').style.width = avgReport+'%';
+    }
+
+    // Template usage logic
+    document.addEventListener('click', async (ev)=>{
+      const btn = ev.target.closest('button[data-template]');
+      if(!btn) return;
+
+      const name = btn.getAttribute('data-template');
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, template: name })
+      });
+
+      if (res.ok) {
+        const newC = await res.json();
+        campaigns.push(newC);
+        renderCampaigns();
+        computeSnapshot?.();
+        showToast(`✅ Template "${name}" campaign created`);
+        closeTemplatesModal();
+      } else {
+        showToast('❌ Failed to create campaign');
+      }
+    });
+
+    // New campaign logic
+    document.getElementById('newCampaignBtn').addEventListener('click', async ()=>{
+      const name = prompt('Campaign name:', 'Untitled campaign');
+      if(!name) return;
+
+      const res = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+
+      if (res.ok) {
+        const newC = await res.json();
+        campaigns.push(newC);
+        renderCampaigns();
+        computeSnapshot?.();
+        alert(`✅ Campaign "${name}" created successfully`);
+      } else {
+        alert('❌ Failed to create campaign');
+      }
+    });
+
+    loadCampaigns();
+
+    // Action handling
+    document.addEventListener('click', async (ev) => {
+      const btn = ev.target.closest('button[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      const id = btn.dataset.id;
+
+      if (action === 'import') {
+        const modal = document.getElementById('importModal');
+        modal.style.display = 'grid';
+        modal.dataset.campaignId = id;
+        return;
+      }
+
+      if (action === 'export') {
+        const res = await fetch(`/api/campaigns/${id}/export`);
+        if (!res.ok) return showToast('Export failed');
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `campaign_${id}.csv`;
+        a.click();
+        showToast('Exported successfully');
+        return;
+      }
+
+    if (action === 'stats') {
+      const res = await fetch(`/api/campaigns/${id}/stats`);
+      if (!res.ok) return showToast('Failed to fetch stats');
+      const stats = await res.json();
+
+      alert(`📊 Campaign Stats
+
+    Targets: ${stats.total_targets}
+    Clicks: ${stats.clicks}
+    CTR: ${stats.ctr}%`);
+
+      await loadCampaigns(); // refresh campaign data
+      return;
+    }
+
+      // 🗑️ Delete campaign
+      if (action === 'delete') {
+        if(!confirm('Are you sure you want to delete this campaign?')) return;
+        const res = await fetch(`/api/campaigns/${id}`, { method: 'DELETE' });
+        if(res.ok){
+          campaigns = campaigns.filter(c => c.id != id);
+          renderCampaigns();
+          computeSnapshot?.();
+          showToast('✅ Campaign deleted');
+        } else {
+          showToast('❌ Failed to delete campaign');
+        }
+        return;
+      }
+    });
+
+    // Import submission
+    document.getElementById('importSubmit').addEventListener('click', async () => {
+      const modal = document.getElementById('importModal');
+      const campaignId = modal.dataset.campaignId;
+      const text = document.getElementById('importArea').value.trim();
+      const file = document.getElementById('csvFile').files[0];
+
+      if (!text && !file) {
+        showToast('Please paste emails or upload a CSV');
+        return;
+      }
+
+      let emails = [];
+
+      if (text) {
+        emails = text.split(/\n+/).map(e => e.trim()).filter(e => e.includes('@'));
+      } else if (file) {
+        const csvText = await file.text();
+        emails = csvText.split(/\r?\n/).map(e => e.split(',')[0].trim()).filter(e => e.includes('@'));
+      }
+
+      if (!emails.length) {
+        showToast('No valid emails found');
+        return;
+      }
+
+      const res = await fetch(`/api/campaigns/${campaignId}/import`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emails })
+      });
+
+      if (res.ok) {
+      showToast(`Imported ${emails.length} targets`);
+      modal.style.display = 'none';
+      document.getElementById('importArea').value = '';
+      document.getElementById('csvFile').value = '';
+
+      await loadCampaigns(); // refresh table
+      } else {
+        showToast('Import failed');
+      }
+    });
+    
+  </script>
+</body>
+</html>

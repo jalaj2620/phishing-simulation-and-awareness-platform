@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login • Phishing Platform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <div class="row">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          <div class="brand">Phishing Simulation & Awareness</div>
+        </div>
+        <span class="badge">v1.0</span>
+      </div>
+
+      <h1>Welcome back</h1>
+      <div class="sub">Sign in to manage campaigns and training.</div>
+
+      <div class="field">
+        <label>Username</label>
+        <input id="username" type="text" placeholder="admin" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="password" type="password" placeholder="••••••••" />
+      </div>
+
+      <div class="help">
+        <label class="row tiny"><input type="checkbox" style="accent-color:var(--primary)"/> Remember me</label>
+        <a class="tiny" href="#">Forgot password?</a>
+      </div>
+
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:6px" id="loginBtn">Sign in</button>
+
+      <div class="tiny" style="margin-top:12px">By continuing you agree to our <a href="#" class="pill">Acceptable Use</a>.</div>
+
+      <div id="errorMsg" class="tiny" style="color:var(--danger);margin-top:8px;display:none;">Invalid username or password</div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      if (!username || !password) {
+        errorMsg.textContent = "Please enter both username and password.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.status === 'success') {
+          localStorage.setItem('user', JSON.stringify(data.user));
+          window.location.href = 'dashboard.html';
+        } else {
+          errorMsg.textContent = "Invalid username or password.";
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = "Server error. Please try again.";
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    // Optional: allow pressing Enter to submit
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+  </script>
+</body>
+</html>

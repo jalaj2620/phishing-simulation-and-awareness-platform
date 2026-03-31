@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard • Phishing Platform</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    
+<aside class="sidebar">
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+    <div>
+      <div class="brand">PhishSim</div>
+      <div class="tiny muted">Admin Console</div>
+    </div>
+  </div>
+  <nav class="nav stack">
+    <a href="dashboard.html" class="active">🏠 Dashboard</a>
+    <a href="campaigns.html">✉️ Campaigns</a>
+    <a href="training.html">🎓 Training</a>
+    <a href="/user-awareness">💻 User Awareness</a>
+  </nav>
+  <div style="margin-top:18px" class="tiny muted">Environment: <span class="badge">Demo</span></div>
+</aside>
+
+    <div>
+      <header class="topbar">
+        <div class="search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="globalSearch" placeholder="Search employees, campaigns, incidents…"/>
+        </div>
+        <div class="user">
+          <span class="pill">Role: Super Admin</span>
+          <div class="avatar"></div>
+        </div>
+      </header>
+
+      <main>
+        <div class="grid cols-3">
+          <div class="card">
+            <div class="kpi">
+              <div class="stack">
+                <span class="muted">Active Campaigns</span>
+                <strong id="kpiActive">—</strong>
+              </div>
+              <span id="kpiActiveStatus" class="status ok">—</span>
+            </div>
+            <div class="spark" style="margin-top:12px"></div>
+          </div>
+
+          <div class="card">
+            <div class="kpi">
+              <div class="stack"><span class="muted">Training Completion</span><strong id="kpiTraining">—</strong></div>
+              <div class="progress" style="width:160px"><span id="kpiTrainingBar" style="width:0%"></span></div>
+            </div>
+            <div class="tiny muted" style="margin-top:8px">Deadline: 30 Sep</div>
+          </div>
+
+          <div class="card">
+            <div class="kpi">
+              <div class="stack"><span class="muted">Incidents This Week</span><strong id="kpiIncidents">—</strong></div>
+              <span id="kpiIncidentsStatus" class="status warn">—</span>
+            </div>
+            <div class="spark" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div class="grid cols-2" style="margin-top:18px">
+          <div class="card">
+            <h3>Recent Campaigns</h3>
+            <table>
+              <thead><tr><th>Name</th><th>Targets</th><th>Status</th><th>CTR</th></tr></thead>
+              <tbody id="recentCampaigns"></tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <h3>Open Incidents</h3>
+            <table>
+              <thead><tr><th>Employee</th><th>Subject</th><th>State</th><th>Age</th></tr></thead>
+              <tbody>
+                <tr><td>A. Sharma</td><td>Unusual login attempt</td><td><span class="status warn">Under Review</span></td><td>2h</td></tr>
+                <tr><td>R. Iyer</td><td>Fake payroll mail</td><td><span class="status danger">Action Needed</span></td><td>6h</td></tr>
+                <tr><td>N. Gupta</td><td>Suspicious attachment</td><td><span class="status warn">Under Review</span></td><td>1d</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    async function api(path, opts = {}) {
+      const res = await fetch(path, opts);
+      let body;
+      try { body = await res.json(); } catch(e) { body = null; }
+      return { ok: res.ok, status: res.status, body };
+    }
+
+    async function loadDashboard(){
+      const r = await api('/api/campaigns');
+      if(!r.ok){ console.warn('failed to load campaigns'); return; }
+      const campaigns = r.body || [];
+        // 👇 Add this check right here
+  if (campaigns.length === 0) {
+    document.getElementById('recentCampaigns').innerHTML =
+      '<tr><td colspan="4" class="muted" style="text-align:center;">No campaigns created yet.</td></tr>';
+
+    // Reset KPIs visually to 0
+    document.getElementById('kpiActive').textContent = '0';
+    document.getElementById('kpiActiveStatus').textContent = 'Idle';
+    document.getElementById('kpiTraining').textContent = '—';
+    document.getElementById('kpiTrainingBar').style.width = '0%';
+    document.getElementById('kpiIncidents').textContent = '—';
+    document.getElementById('kpiIncidentsStatus').textContent = '—';
+    return; // stop further processing
+  }
+
+      const active = campaigns.filter(c => c.status === 'active' || (c.status && c.status.toLowerCase().includes('active'))).length;
+      const totalTargets = campaigns.reduce((s,c)=> s + (c.targets_count||0), 0);
+      const totalClicks = campaigns.reduce((s,c)=> s + (c.clicks_count||0), 0);
+      const ctr = totalTargets ? Math.round((totalClicks/totalTargets)*100) : 0;
+
+      document.getElementById('kpiActive').textContent = active;
+      document.getElementById('kpiActiveStatus').textContent = active ? 'On track' : 'Idle';
+      document.getElementById('kpiTraining').textContent = '72%';
+      document.getElementById('kpiTrainingBar').style.width = '72%';
+      document.getElementById('kpiIncidents').textContent = 9;
+      document.getElementById('kpiIncidentsStatus').textContent = 'Reviewing';
+
+      // recent campaigns table
+      const tbody = document.getElementById('recentCampaigns');
+      tbody.innerHTML = '';
+      for(const c of campaigns.slice(0,5)){
+        const tr = document.createElement('tr');
+        const ctrText = (c.targets_count ? ((c.clicks_count||0)/c.targets_count*100).toFixed(1)+'%' : '—');
+        tr.innerHTML = `<td>${escapeHtml(c.name)}</td><td>${c.targets_count||0}</td><td><span class="status ${c.status==='active'?'warn':'ok'}">${escapeHtml(c.status||'draft')}</span></td><td>${ctrText}</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function escapeHtml(s = '') {
+      return String(s).replace(/[&<>"']/g, (m) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+    }
+
+    loadDashboard();
+    setInterval(loadDashboard, 5000);
+  </script>
+
+  <script>
+async function loadActiveCampaigns() {
+  try {
+    const res = await fetch('/api/campaigns');
+    if (!res.ok) return;
+
+    const campaigns = await res.json();
+
+    // Count campaigns
+    const count = campaigns.length;
+
+    // Update UI
+    document.getElementById('kpiActive').textContent = count;
+
+  } catch (err) {
+    console.error('Failed to load campaigns', err);
+  }
+}
+
+// Call once
+loadActiveCampaigns();
+</script>
+</body>
+</html>

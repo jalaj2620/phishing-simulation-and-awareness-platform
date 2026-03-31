@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Security Awareness • PhishSim</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div style="min-height:100vh;display:grid;place-items:center;padding:40px;background:linear-gradient(180deg,var(--bg),#09101f)">
+    <div class="card" style="max-width:720px;text-align:center">
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+      <h1>Thanks — we recorded your click</h1>
+      <p class="muted">This was part of a simulated phishing exercise to help improve awareness. Here are some quick tips to keep your account and company safe:</p>
+      <div style="text-align:left;margin-top:14px">
+        <ul>
+          <li>Don't enter credentials on unexpected sites. Look for mismatched domains.</li>
+          <li>Hover links to preview destination, don't click unknown attachments (ZIP, EXE, macro docs).</li>
+          <li>Report suspicious emails to your security team instead of forwarding them.</li>
+        </ul>
+      </div>
+      <div style="margin-top:18px">
+        <a href="/dashboard.html" class="btn primary">Back to dashboard</a>
+      </div>
+    </div>
+  </div>          
+  <div class="card">
+            <div class="kpi">
+              <div class="stack"><span class="muted">Phish Click Rate</span><strong id="kpiClickRate">—</strong></div>
+              <div class="progress" style="width:160px"><span id="kpiClickRateBar" style="width:0%"></span></div>
+            </div>
+            <div class="tiny muted  " style="margin-top:8px">Last campaign: 15 Aug</div>   
+            
+  <script>
+async function loadClickRate() {
+  try {
+    // Get all campaigns
+    const res = await fetch('/api/campaigns');
+    if (!res.ok) return;
+
+    const campaigns = await res.json();
+    if (!campaigns.length) return;
+
+    // Get latest campaign
+    const latest = campaigns[0];
+
+    // Fetch stats for latest campaign
+    const statsRes = await fetch(`/api/campaigns/${latest.id}/stats`);
+    if (!statsRes.ok) return;
+
+    const data = await statsRes.json();
+
+    const ctr = data.ctr || 0;
+
+    // Update UI
+    document.getElementById('kpiClickRate').textContent = ctr + '%';
+    document.getElementById('kpiClickRateBar').style.width = ctr + '%';
+
+  } catch (err) {
+    console.error('CTR load failed', err);
+  }
+}
+
+// Call function
+loadClickRate();
+</script>
+</body>
+</html>

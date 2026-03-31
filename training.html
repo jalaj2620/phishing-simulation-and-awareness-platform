@@ -1,0 +1,430 @@
+<!-- training.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Training • Phishing Platform</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Minimal modal helper that uses your existing .card visual */
+    #quizModalBackdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(2,6,23,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 120;
+      padding: 20px;
+    }
+    #quizModal .card { max-width: 820px; width: 100%; }
+    .quiz-question { margin-top: 8px; }
+    .quiz-options { display: grid; gap: 10px; margin-top: 10px; }
+    .quiz-option { padding: 10px; border-radius: 10px; border:1px solid var(--border); background: linear-gradient(180deg,#0f1634,#0b122b); cursor: pointer; user-select:none; }
+    .quiz-option.selected { outline: 3px solid rgba(30,200,179,0.12); }
+    .quiz-footer { display:flex; gap:10px; justify-content:space-between; align-items:center; margin-top:14px; }
+    .muted-small { color:var(--muted); font-size:0.9rem; }
+    /* make table rows visibly clickable without changing layout */
+    table tbody tr[data-clickable="1"] { cursor: pointer; }
+    /* ensure progress bars animate smoothly (your .progress>span exists) */
+    #completionBar, #avgScoreBar { transition: width 600ms ease; }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    
+<aside class="sidebar">
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+    <div>
+      <div class="brand">PhishSim</div>
+      <div class="tiny muted">Admin Console</div>
+    </div>
+  </div>
+  <nav class="nav stack">
+    <a href="dashboard.html">🏠 Dashboard</a>
+    <a href="campaigns.html">✉️ Campaigns</a>
+    <a href="training.html" class="active">🎓 Training</a>
+    <a href="/user-awareness">💻 User Awareness</a>
+  </nav>
+  <div style="margin-top:18px" class="tiny muted">Environment: <span class="badge">Demo</span></div>
+</aside>
+
+    <div>
+      <header class="topbar">
+        <div class="title">Employee Awareness Modules</div>
+        <div class="row"><span class="pill">Cohort: Q3</span><div class="avatar"></div></div>
+      </header>
+
+      <main>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3>Module Library</h3>
+            <table id="modulesTable">
+              <thead><tr><th>Module</th><th>Duration</th><th>Quiz</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr data-module="spotting_red_flags" data-clickable="1"><td>Spotting Red Flags</td><td>12 min</td><td class="quiz-count">8 Qs</td><td class="status-cell"><span class="status ok">Ready</span></td></tr>
+                <tr data-module="links_attachments" data-clickable="1"><td>Links & Attachments</td><td>9 min</td><td class="quiz-count">6 Qs</td><td class="status-cell"><span class="status ok">Ready</span></td></tr>
+                <tr data-module="smishing_vishing" data-clickable="1"><td>Smishing & Vishing</td><td>10 min</td><td class="quiz-count">7 Qs</td><td class="status-cell"><span class="status ok">Ready</span></td></tr>
+                <tr data-module="reporting_workflow" data-clickable="1"><td>Reporting Workflow</td><td>6 min</td><td class="quiz-count">5 Qs</td><td class="status-cell"><span class="status ok">Ready</span></td></tr>
+              </tbody>
+            </table>
+            <div class="muted-small" style="margin-top:8px">Click any row to start the module quiz.</div>
+          </div>
+
+          <div class="card">
+            <h3>Progress Overview</h3>
+            <div class="stack">
+              <div class="row" style="justify-content:space-between">
+                <span class="muted">Completion</span>
+                <strong id="completionText">0%</strong>
+              </div>
+              <div class="progress"><span id="completionBar" style="width:0%"></span></div>
+
+              <div class="row" style="justify-content:space-between;margin-top:8px">
+                <span class="muted">Avg Score</span>
+                <strong id="avgScoreText">—</strong>
+              </div>
+              <div class="progress"><span id="avgScoreBar" style="width:0%"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <h3>Infographic — Red Flags of Phishing</h3>
+          <div class="grid cols-3">
+            <div class="card"><div class="title">Urgency & Threats</div><div class="tiny muted">“Immediate action required”, “Account locked”.</div></div>
+            <div class="card"><div class="title">Suspicious Links</div><div class="tiny muted">Hover to preview URL, mismatched domains.</div></div>
+            <div class="card"><div class="title">Unexpected Attachments</div><div class="tiny muted">ZIP/EXE or macro-enabled docs.</div></div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Quiz Modal Backdrop -->
+  <div id="quizModalBackdrop" aria-hidden="true">
+    <div id="quizModal" role="dialog" aria-modal="true">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <h3 id="modalTitle">Quiz</h3>
+            <div id="modalSubtitle" class="tiny muted">Module</div>
+          </div>
+          <div>
+            <button id="modalClose" class="btn ghost">Close</button>
+          </div>
+        </div>
+
+        <div id="quizBody" style="margin-top:12px">
+          <!-- question content injected here -->
+        </div>
+
+        <div id="quizControls" class="quiz-footer">
+          <div class="muted-small" id="progressText">Question 1 of 1</div>
+          <div style="display:flex;gap:8px">
+            <button id="prevBtn" class="btn ghost">Prev</button>
+            <button id="nextBtn" class="btn primary">Next</button>
+            <button id="submitBtn" class="btn primary" style="display:none">Submit</button>
+          </div>
+        </div>
+
+        <div id="quizResultBox" style="display:none;margin-top:14px;text-align:center"></div>
+      </div>
+    </div>
+  </div>
+  
+
+
+  <script>
+    /* -------------------------
+       Hardcoded quizzes (realistic)
+       Exact counts:
+       spotting_red_flags: 8
+       links_attachments: 6
+       smishing_vishing: 7
+       reporting_workflow: 5
+       ------------------------- */
+    const QUIZZES = {
+      spotting_red_flags: {
+        title: 'Spotting Red Flags',
+        questions: [
+          { q: 'An email asks you to urgently approve a wire transfer from an unfamiliar vendor. Which indicator is the biggest red flag?', opts: ['Polite tone','Unusual request + urgency','Correct company logo','Personalized greeting'], a:1 },
+          { q: 'You notice the sender address is support@paypall.com (extra "l"). What should you suspect?', opts: ['Legitimate update','Phishing (typosquatting)','Internal memo','Spam only'], a:1 },
+          { q: 'A message contains threats like “your account will be closed in 24 hours”. This is typically:', opts: ['A friendly reminder','A social-engineering tactic','A technical notification','A calendar invite'], a:1 },
+          { q: 'The email asks you to download an attachment named Invoice_223.exe. What do you do?', opts: ['Open it to check the invoice','Treat as suspicious and do not open','Reply asking for invoice','Forward to your manager'], a:1 },
+          { q: 'An email contains a link that displays “company.com” but the real destination is different when hovered. This is called:', opts: ['URL masking','Safe redirect','Link verification','DNS lookup'], a:0 },
+          { q: 'Which of the following is a safe sign that an email is genuine?', opts: ['Generic greeting like "Dear user"','Requests immediate password','Sent from your exact known domain and asks nothing sensitive','Misspellings and odd grammar'], a:2 },
+          { q: 'An unexpected attachment prompting you to enable macros usually means:', opts: ['It’s necessary for viewing','Likely a malicious document','It will improve performance','It’s a compressed photos archive'], a:1 },
+          { q: 'If in doubt about an email from your vendor, the best next step is to:', opts: ['Click links to confirm','Use contact info from the email to call them','Call using a number from their official site','Forward to the finance team only'], a:2 }
+        ]
+      },
+
+      links_attachments: {
+        title: 'Links & Attachments',
+        questions: [
+          { q: 'Hovering over a link before clicking helps because it shows:', opts: ['The link’s full destination','The email body','Sender IP address','Attachment size'], a:0 },
+          { q: 'Which attachment type is the riskiest to open without verification?', opts: ['.pdf','.docx','.zip','.exe'], a:3 },
+          { q: 'A link with many subdomains like login.company.verif.example.com may indicate:', opts: ['Safe nested domains','A try to mimic the brand using subdomains','Official redirect','A browser extension issue'], a:1 },
+          { q: 'You get a ZIP attachment that contains an .js file. What should you assume?', opts: ['It’s safe if zipped','Potentially malicious and do not run','Only images can be harmful','It’s an OS update'], a:1 },
+          { q: 'Best practice for attachments from external senders is to:', opts: ['Open immediately if labeled invoice','Scan in sandbox or ask sender to verify','Extract on your desktop','Forward internally first'], a:1 },
+          { q: 'If a link shows a padlock (https), that means:', opts: ['The site is definitely legitimate','The connection is encrypted but site may still be malicious','It’s government certified','You are safe to enter credentials'], a:1 }
+        ]
+      },
+
+      smishing_vishing: {
+        title: 'Smishing & Vishing',
+        questions: [
+          { q: 'You receive a text claiming to be IT asking you to call a number to reset password. Best action:', opts: ['Call immediately','Reply with your username','Verify using company directory number','Click any links in SMS'], a:2 },
+          { q: 'Vishing attacks often use which of the following tactics?', opts: ['Friendly in-person request','Authority and urgency over the phone','Blank emails','Official software updates'], a:1 },
+          { q: 'A short SMS asks for a verification code you received elsewhere. This likely means:', opts: ['You forgot something','Someone is trying to hijack your account','It’s promotional','It’s a survey'], a:1 },
+          { q: 'If you suspect a phone call is a vishing attempt, you should:', opts: ['Provide requested details','Disconnect and verify via official channels','Call back the same number','Share the call on social media'], a:1 },
+          { q: 'Smishing is phishing carried out over:', opts: ['Email','Phone calls','Text messages (SMS)','Social media only'], a:2 },
+          { q: 'A voicemail claims urgent security action and provides a callback number. What is safer to do?', opts: ['Use the number in the voicemail','Look up the company number and call that','Give personal data over voicemail','Ignore all voicemails'], a:1 },
+          { q: 'When an unknown caller claims to be from “support” and asks for remote access, you should:', opts: ['Grant access temporarily','Refuse and report to security','Provide credentials over phone','Ask them to email instead and share credentials'], a:1 }
+        ]
+      },
+
+      reporting_workflow: {
+        title: 'Reporting Workflow',
+        questions: [
+          { q: 'If you receive a suspicious email, you should first:', opts: ['Delete it immediately','Report it through the official reporting channel','Reply to the sender asking for proof','Forward to your colleagues'], a:1 },
+          { q: 'A good report should include:', opts: ['Only the subject line','Screenshots, headers and context','Just the sender address','The full inbox'], a:1 },
+          { q: 'Why should you avoid forwarding suspected phishing emails to large groups?', opts: ['It helps spread awareness','It can spread potential malware and cause confusion','It is required by policy','It reduces inbox clutter'], a:1 },
+          { q: 'Who should you contact if you accidentally entered credentials on a phishing site?', opts: ['No one','Security/IT immediately and change passwords','The sender','Your manager only'], a:1 },
+          { q: 'After reporting, the security team may:', opts: ['Ignore the report','Investigate, block sender and notify affected users','Publish sender details publicly','Charge you'], a:1 }
+        ]
+      }
+    };
+
+    /* -------------------------
+       Modal + Quiz player logic
+       ------------------------- */
+    const backdrop = document.getElementById('quizModalBackdrop');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalSubtitle = document.getElementById('modalSubtitle');
+    const quizBody = document.getElementById('quizBody');
+    const progressText = document.getElementById('progressText');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const modalClose = document.getElementById('modalClose');
+    const quizResultBox = document.getElementById('quizResultBox');
+
+    // Progress UI elements
+    const completionText = document.getElementById('completionText');
+    const completionBar = document.getElementById('completionBar');
+    const avgScoreText = document.getElementById('avgScoreText');
+    const avgScoreBar = document.getElementById('avgScoreBar');
+
+    let currentQuizKey = null;
+    let currentQuiz = null;
+    let currentIndex = 0;
+    let answers = []; // store selected option indices
+    // runtime scores stored in-memory:
+    // { moduleKey: scorePercent (0-100) } but only set if >=70
+    let scores = {};
+
+    // open modal for module key
+    function openQuiz(moduleKey){
+      currentQuizKey = moduleKey;
+      currentQuiz = QUIZZES[moduleKey];
+      if(!currentQuiz) return;
+      modalTitle.textContent = currentQuiz.title;
+      modalSubtitle.textContent = `Module quiz — ${currentQuiz.questions.length} questions`;
+      currentIndex = 0;
+      // answers keep current session state for retakes
+      answers = new Array(currentQuiz.questions.length).fill(null);
+      quizResultBox.style.display = 'none';
+      submitBtn.style.display = 'none';
+      renderQuestion();
+      backdrop.style.display = 'flex';
+      backdrop.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeQuiz(){
+      backdrop.style.display = 'none';
+      backdrop.setAttribute('aria-hidden', 'true');
+    }
+
+    modalClose.addEventListener('click', closeQuiz);
+    backdrop.addEventListener('click', (ev)=>{
+      if(ev.target === backdrop) closeQuiz();
+    });
+
+    function renderQuestion(){
+      const qObj = currentQuiz.questions[currentIndex];
+      quizBody.innerHTML = '';
+      const qh = document.createElement('div');
+      qh.className = 'quiz-question';
+      qh.innerHTML = `<strong>${sanitize(`${currentIndex+1}. ${qObj.q}`)}</strong>`;
+      quizBody.appendChild(qh);
+
+      const opts = document.createElement('div');
+      opts.className = 'quiz-options';
+      qObj.opts.forEach((opt, i) => {
+        const optDiv = document.createElement('div');
+        optDiv.className = 'quiz-option';
+        optDiv.dataset.optIndex = i;
+        optDiv.tabIndex = 0;
+        optDiv.innerHTML = sanitize(opt);
+        // show selected if previously answered
+        if(answers[currentIndex] === i) optDiv.classList.add('selected');
+        optDiv.addEventListener('click', ()=> {
+          // record answer
+          answers[currentIndex] = i;
+          // toggle selection visuals
+          opts.querySelectorAll('.quiz-option').forEach(el => el.classList.remove('selected'));
+          optDiv.classList.add('selected');
+        });
+        opts.appendChild(optDiv);
+      });
+      quizBody.appendChild(opts);
+
+      progressText.textContent = `Question ${currentIndex+1} of ${currentQuiz.questions.length}`;
+
+      // controls state
+      prevBtn.disabled = currentIndex === 0;
+      if(currentIndex < currentQuiz.questions.length - 1){
+        nextBtn.style.display = 'inline-flex';
+        submitBtn.style.display = 'none';
+      } else {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = 'inline-flex';
+      }
+    }
+
+    prevBtn.addEventListener('click', ()=>{
+      if(currentIndex > 0){ currentIndex--; renderQuestion(); }
+    });
+    nextBtn.addEventListener('click', ()=>{
+      if(currentIndex < currentQuiz.questions.length - 1){ currentIndex++; renderQuestion(); }
+    });
+
+    submitBtn.addEventListener('click', ()=>{
+      // ensure all answered
+      const unanswered = answers.findIndex(a => a === null);
+      if(unanswered !== -1){
+        alert(`Please answer all questions. You still need to answer question ${unanswered+1}.`);
+        currentIndex = unanswered;
+        renderQuestion();
+        return;
+      }
+      // grade
+      let correct = 0;
+      currentQuiz.questions.forEach((q, idx) => { if(answers[idx] === q.a) correct++; });
+      const total = currentQuiz.questions.length;
+      const pct = Math.round((correct/total)*100);
+
+      quizResultBox.style.display = 'block';
+      quizResultBox.innerHTML = `<h3>You scored ${correct} / ${total} (${pct}%)</h3>
+        <div class="muted-small" style="margin-top:8px">Module marked Completed only if score ≥ 70%.</div>
+        <div style="margin-top:10px"><button id="closeAfter" class="btn primary">Close</button></div>`;
+
+      // mark Completed only if pct >= 70
+      if(pct >= 70){
+        scores[currentQuizKey] = pct;
+        markModuleCompleted(currentQuizKey, pct);
+      } else {
+        // if previously completed and now lower score, remove completion
+        if(scores[currentQuizKey] !== undefined){
+          delete scores[currentQuizKey];
+          markModuleNotCompleted(currentQuizKey);
+        }
+        // still show a subtle pill with score but not "Completed"
+        markModuleAttempted(currentQuizKey, pct);
+      }
+
+      // update progress overview immediately
+      updateProgressOverview();
+
+      document.getElementById('closeAfter').addEventListener('click', closeQuiz);
+    });
+
+    function markModuleCompleted(moduleKey, pct){
+      const row = document.querySelector(`tr[data-module="${moduleKey}"]`);
+      if(!row) return;
+      const statusCell = row.querySelector('.status-cell');
+      if(!statusCell) return;
+      statusCell.innerHTML = `<span class="pill">Completed • ${pct}%</span>`;
+    }
+
+    function markModuleAttempted(moduleKey, pct){
+      const row = document.querySelector(`tr[data-module="${moduleKey}"]`);
+      if(!row) return;
+      const statusCell = row.querySelector('.status-cell');
+      if(!statusCell) return;
+      statusCell.innerHTML = `<span class="pill">${pct}% (Not passed)</span>`;
+    }
+
+    function markModuleNotCompleted(moduleKey){
+      const row = document.querySelector(`tr[data-module="${moduleKey}"]`);
+      if(!row) return;
+      const statusCell = row.querySelector('.status-cell');
+      if(!statusCell) return;
+      statusCell.innerHTML = `<span class="status ok">Ready</span>`;
+    }
+
+    function updateProgressOverview(){
+      const totalModules = Object.keys(QUIZZES).length;
+      const completedModules = Object.keys(scores).length;
+      const completionPct = Math.round((completedModules / totalModules) * 100);
+      // compute average of completed modules only
+      const completedScores = Object.values(scores);
+      const avg = completedScores.length ? Math.round(completedScores.reduce((s,v)=>s+v,0) / completedScores.length) : null;
+
+      // update text & bars (immediate with transition defined in CSS)
+      completionText.textContent = `${completionPct}%`;
+      completionBar.style.width = `${completionPct}%`;
+
+      if(avg === null){
+        avgScoreText.textContent = '—';
+        avgScoreBar.style.width = `0%`;
+      } else {
+        avgScoreText.textContent = `${avg}%`;
+        avgScoreBar.style.width = `${avg}%`;
+      }
+    }
+
+    // sanitize simple text to prevent accidental HTML injection
+    function sanitize(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    // make table rows clickable (safe wiring)
+    (function wireModuleRows(){
+      const rows = document.querySelectorAll('table#modulesTable tbody tr[data-clickable="1"]');
+      rows.forEach(tr=>{
+        tr.addEventListener('click', ()=> {
+          const moduleKey = tr.dataset.module;
+          if(moduleKey) openQuiz(moduleKey);
+        });
+      });
+    })();
+
+    // keyboard navigation: Esc to close
+    document.addEventListener('keydown', (e)=>{
+      if(e.key === 'Escape' && backdrop.style.display === 'flex') closeQuiz();
+    });
+
+    // initial progress state (none completed)
+    updateProgressOverview();
+
+    // end of script
+  </script>
+
+
+<script>
+  // independent handler (isolated from quiz clicks)
+  document.querySelectorAll('.infographic-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+      e.stopPropagation(); // stop event bubbling to table click
+      header.classList.toggle('active');
+      const content = header.nextElementSibling;
+      content.classList.toggle('open');
+    });
+  });
+</script>
+
+</body>
+</html>
+<!-- end of training.html -->
