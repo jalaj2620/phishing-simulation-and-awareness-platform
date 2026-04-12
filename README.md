@@ -10,6 +10,7 @@ Created: 2025-10-12 06:31:27Z
 
 ## Prerequisites
 - Python 3.8+
+- backend knowledge for a better understanding
 - (optional) virtualenv
 
 ## Setup & Run
