@@ -38,5 +38,5 @@ Server will run at `http://127.0.0.1:5000`
 - `GET /api/campaigns/<id>/stats` : campaign statistics
 
 ## Notes
-- This project is for demo/local testing only. Do not use to send live phishing emails.
+- This project is for demo/local testing only. Do not use to send live phishing emails. and try to practice more
 - For email sending in sandbox use MailHog or a sandboxed SMTP provider.
