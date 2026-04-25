@@ -1,4 +1,4 @@
-# Phishing Awareness Backend (Flask)
+# Phishing Awareness Flatform  Backend (Flask)
 
 This repository contains a lightweight Flask backend for a phishing-awareness demo.
 Created: 2025-10-12 06:31:27Z
